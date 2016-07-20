@@ -96,10 +96,8 @@ class MediaInfo(object):
         # Fix for https://github.com/sbraz/pymediainfo/issues/22
         # Python 2 does not change LC_CTYPE
         # at startup: https://bugs.python.org/issue6203
-        version_major = sys.version_info[0] if type(sys.version_info) is tuple \
-                                            else sys.version_info.major
-        if (version_major < 3 and os.name == "posix"
-                and locale.getlocale() == (None, None)):
+        if (sys.version_info < (3,) and os.name == "posix" and
+                locale.getlocale() == (None, None)):
             locale.setlocale(locale.LC_CTYPE, locale.getdefaultlocale())
         lib.MediaInfo_Option(None, "Inform", "XML")
         lib.MediaInfo_Option(None, "Complete", "1")
@@ -112,7 +110,9 @@ class MediaInfo(object):
     def _populate_tracks(self):
         if self.xml_dom is None:
             return
-        for xml_track in self.xml_dom.getiterator("track"):
+        def _getiter(c, cxt):
+            return c.getiterator(cxt) if sys.version_info < (2,7) else c.iter(cxt)
+        for xml_track in _getiter(self.xml_dom, "track"):
             self._tracks.append(Track(xml_track))
     @property
     def tracks(self):
